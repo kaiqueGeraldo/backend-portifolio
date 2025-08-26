@@ -1,51 +1,50 @@
 require("dotenv").config();
-
 const express = require("express");
-const nodemailer = require("nodemailer");
 const cors = require("cors");
+const { Resend } = require("resend");
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
 app.use(express.json());
-app.use(cors({ origin: "https://kaique.dev.br" }));
+app.use(cors({ origin: "https://kaique.dev.br" })); 
 
-// Verifica se as credenciais do e-mail estão definidas
-if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-  console.error("❌ ERRO: Variáveis EMAIL_USER e EMAIL_PASS não estão definidas!");
-  process.exit(1);
-}
-
-// Configurar o transporte de email
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
+const resend = new Resend(process.env.RESEND_API_KEY);
+const meuEmail = process.env.EMAIL_USER;
 
 // Rota para enviar email
 app.post("/enviar-email", async (req, res) => {
-  const { nome, email, mensagem } = req.body;
+  const { nome, email, assunto, mensagem } = req.body;
 
-  if (!nome || !email || !mensagem) {
+  if (!nome || !email || !assunto || !mensagem) {
     return res.status(400).json({ error: "Todos os campos são obrigatórios" });
   }
 
-  const mailOptions = {
-    from: email,
-    to: process.env.EMAIL_USER,
-    subject: `Nova mensagem de contato - ${nome}`,
-    text: `Nome: ${nome}\nEmail: ${email}\nMensagem:\n${mensagem}`,
-  };
-
   try {
-    await transporter.sendMail(mailOptions);
-    res.status(200).json({ message: "Email enviado com sucesso!" });
+    const { data, error } = await resend.emails.send({
+      from: "Portfolio Contact <onboarding@resend.dev>",
+      to: [meuEmail],
+      subject: assunto,
+      reply_to: email,
+      html: `
+        <h1>Nova mensagem do Portfólio</h1>
+        <p><strong>Nome:</strong> ${nome}</p>
+        <p><strong>Email:</strong> ${email}</p>
+        <hr>
+        <p><strong>Mensagem:</strong></p>
+        <p>${mensagem}</p>
+      `,
+    });
+
+    if (error) {
+      console.error("❌ Erro ao enviar email:", error);
+      return res.status(400).json({ error });
+    }
+
+    res.status(200).json({ message: "Email enviado com sucesso!", data });
   } catch (error) {
     console.error("❌ Erro ao enviar email:", error);
-    res.status(500).json({ error: "Erro ao enviar email" });
+    res.status(500).json({ error: "Erro interno ao enviar email" });
   }
 });
 
