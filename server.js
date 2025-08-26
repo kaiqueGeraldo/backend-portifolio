@@ -1,6 +1,4 @@
 require("dotenv").config();
-console.log("EMAIL_USER:", process.env.EMAIL_USER);
-console.log("EMAIL_PASS:", process.env.EMAIL_PASS);
 
 const express = require("express");
 const nodemailer = require("nodemailer");
@@ -10,7 +8,7 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 app.use(express.json());
-app.use(cors({ origin: "*" }));
+app.use(cors({ origin: "https://kaique.dev.br" }));
 
 // Verifica se as credenciais do e-mail estão definidas
 if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
