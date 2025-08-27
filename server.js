@@ -7,7 +7,7 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 app.use(express.json());
-app.use(cors({ origin: "https://kaique.dev.br" })); 
+app.use(cors({ origin: "https://kaique.dev.br" }));
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 const meuEmail = process.env.EMAIL_USER;
@@ -22,7 +22,7 @@ app.post("/enviar-email", async (req, res) => {
 
   try {
     const { data, error } = await resend.emails.send({
-      from: "Portfolio Contact <onboarding@resend.dev>",
+      from: "Contato Portfólio <portfolio@kaique.dev.br>",
       to: [meuEmail],
       subject: assunto,
       reply_to: email,
