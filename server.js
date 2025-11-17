@@ -6,14 +6,32 @@ const { Resend } = require("resend");
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+const allowedOrigins = [
+  'https://kaique.dev.br'
+];
+
+const corsOptions = {
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Origem não permitida pelo CORS'));
+    }
+  },
+  methods: ['POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type']
+};
+
+app.options('*', cors(corsOptions));
+
+
 app.use(express.json());
-app.use(cors({ origin: "https://kaique.dev.br" }));
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 const meuEmail = process.env.EMAIL_USER;
 
 // Rota para enviar email
-app.post("/enviar-email", async (req, res) => {
+app.post("/enviar-email", cors(corsOptions), async (req, res) => {
   const { nome, email, assunto, mensagem } = req.body;
 
   if (!nome || !email || !assunto || !mensagem) {
@@ -38,13 +56,14 @@ app.post("/enviar-email", async (req, res) => {
 
     if (error) {
       console.error("❌ Erro ao enviar email:", error);
-      return res.status(400).json({ error });
+      return res.status(400).json({ error: error.message || 'Erro no Resend' });
     }
 
-    res.status(200).json({ message: "Email enviado com sucesso!", data });
+    res.status(200).json({ message: "Email enviado com sucesso!", data: data });
+
   } catch (error) {
-    console.error("❌ Erro ao enviar email:", error);
-    res.status(500).json({ error: "Erro interno ao enviar email" });
+    console.error("❌ Erro interno:", error);
+    res.status(500).json({ error: error.message || "Erro interno ao enviar email" });
   }
 });
 
