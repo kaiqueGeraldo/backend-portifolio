@@ -1,13 +1,17 @@
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
-const { Resend } = require("resend");
+const rateLimit = require("express-rate-limit");
+const { enviarEmail } = require("./src/controllers/emailController");
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+app.set('trust proxy', 1);
+
 const allowedOrigins = [
-  'https://kaique.dev.br'
+  'https://kaique.dev.br',
+  'http://localhost:3000'
 ];
 
 const corsOptions = {
@@ -22,51 +26,24 @@ const corsOptions = {
   allowedHeaders: ['Content-Type']
 };
 
+app.use(express.json());
 app.options('*', cors(corsOptions));
 
-
-app.use(express.json());
-
-const resend = new Resend(process.env.RESEND_API_KEY);
-const meuEmail = process.env.EMAIL_USER;
-
-// Rota para enviar email
-app.post("/enviar-email", cors(corsOptions), async (req, res) => {
-  const { nome, email, assunto, mensagem } = req.body;
-
-  if (!nome || !email || !assunto || !mensagem) {
-    return res.status(400).json({ error: "Todos os campos são obrigatórios" });
-  }
-
-  try {
-    const { data, error } = await resend.emails.send({
-      from: "Contato Portfólio <portfolio@kaique.dev.br>",
-      to: [meuEmail],
-      subject: assunto,
-      reply_to: email,
-      html: `
-        <h1>Nova mensagem do Portfólio</h1>
-        <p><strong>Nome:</strong> ${nome}</p>
-        <p><strong>Email:</strong> ${email}</p>
-        <hr>
-        <p><strong>Mensagem:</strong></p>
-        <p>${mensagem}</p>
-      `,
-    });
-
-    if (error) {
-      console.error("❌ Erro ao enviar email:", error);
-      return res.status(400).json({ error: error.message || 'Erro no Resend' });
-    }
-
-    res.status(200).json({ message: "Email enviado com sucesso!", data: data });
-
-  } catch (error) {
-    console.error("❌ Erro interno:", error);
-    res.status(500).json({ error: error.message || "Erro interno ao enviar email" });
-  }
+const emailLimiter = rateLimit({
+  windowMs: 24 * 60 * 60 * 1000, // 24 horas
+  max: 3, 
+  message: { error: "Você atingiu o limite de envios diários. Tente novamente amanhã." },
+  standardHeaders: true,
+  legacyHeaders: false,
 });
+
+app.get("/", (req, res) => {
+  res.send("API do Portfólio está online! 🚀");
+});
+
+app.post("/enviar-email", cors(corsOptions), emailLimiter, enviarEmail);
 
 app.listen(PORT, () => {
   console.log(`✅ Servidor rodando na porta ${PORT}`);
+  console.log(`🛡️ Ambiente: ${process.env.NODE_ENV || 'development'}`);
 });
