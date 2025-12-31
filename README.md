@@ -20,7 +20,7 @@ O projeto utiliza arquitetura **MVC**, validação rigorosa de dados e proteçã
 
 1. **Clone o repositório:**
    ```bash
-   git clone [https://github.com/kaiqueGeraldo/backend-portifolio.git](https://github.com/kaiqueGeraldo/backend-portifolio.git)
+   git clone https://github.com/kaiqueGeraldo/backend-portifolio.git
    ```
 
 2. **Acesse o diretório:**
@@ -126,3 +126,4 @@ Sinta-se à vontade para utilizar e modificar conforme necessário. 😊
 
 ### Feito por **Kaique Geraldo**
 🔗 [LinkedIn](https://linkedin.com) | 🐙 [GitHub](https://github.com/kaiqueGeraldo) | ✉️ [Email](mailto:kaiique2404@gmail.com)
+
